@@ -1,0 +1,9 @@
+{
+    "name": "Unity.ChannelService.Editor",
+    "references": [
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

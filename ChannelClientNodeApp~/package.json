@@ -1,0 +1,9 @@
+{
+    "name": "unity-connect-example",
+    "version": "0.0.1",
+    "description": "An example of connecting to the ",
+    "main": "index.js",
+    "dependencies": {
+        "ws": "^5.2.0"
+    }
+}

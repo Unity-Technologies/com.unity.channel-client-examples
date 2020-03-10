@@ -1,0 +1,9 @@
+{
+	"name": "com.unity.channel-client-examples",
+	"displayName":"Unity Channel Communication",
+	"version": "0.1.0-preview",
+	"unity": "2020.1",
+	"description": "Provide a public API and examples of using the Unity ChannelService and ChannelClient.",
+	"dependencies": {
+	}
+}
