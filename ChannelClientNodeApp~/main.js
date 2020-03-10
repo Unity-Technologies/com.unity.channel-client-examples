@@ -2,12 +2,14 @@ import * as eventService from "./event-service.js"
 
 const kWebEmit1 = "webEmit1";
 const kWebRequest1 = "webRequest1";
+const kWebRequest2 = "webRequest2";
 const kUnityEmit1 = "unityEmit1";
 const kUnityRequest1 = "unityRequest1";
 
 // Setup UI
 document.getElementById("emit1").addEventListener("click", OnEmit1);
 document.getElementById("request1").addEventListener("click", OnRequest1);
+document.getElementById("request2").addEventListener("click", OnRequest2);
 document.getElementById("log1").addEventListener("click", OnLog1);
 
 // Setup EventService
@@ -35,6 +37,17 @@ function OnRequest1()
         }
         console.log(`On receiving ${kWebRequest1}: ${data.join(",")}`);
     }, [1, "2", 3.0]);
+}
+
+function OnRequest2()
+{
+    eventService.Request(kWebRequest2, (err, data) => {
+        if (!err) {
+            console.error(`On ${kWebRequest2}: there should have been an error.`);
+            return;
+        }
+        console.log(err);
+    }, ["123"], 100)
 }
 
 function OnLog1()

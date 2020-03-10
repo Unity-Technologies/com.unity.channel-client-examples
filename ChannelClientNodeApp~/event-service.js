@@ -55,6 +55,8 @@ let s_ConnectionId = -1;
 
 let s_RequestId = 0;
 
+let s_TickTimer = null;
+
 /**
  * Enum for event data serialization.
  * @readonly
@@ -105,6 +107,28 @@ class RequestMessage {
 
 // API functions
 
+export class OperationCanceledException extends Error {
+    /**
+     * Construct a new OperationCanceledException.
+     * @param {string} message The error message.
+     */
+    constructor(message) {
+        super(message);
+        this.name = 'OperationCanceledException';
+    }
+}
+
+export class TimeoutException extends Error {
+    /**
+     * Construct a new TimeoutException.
+     * @param {string} message The error message.
+     */
+    constructor(message) {
+        super(message);
+        this.name = 'TimeoutException';
+    }
+}
+
 /**
  * Start the EventService.
  * @param {number} port Port on which to connect to.
@@ -116,6 +140,8 @@ export function Start(port) {
     s_Ws.onclose = OnClose;
     s_Ws.onerror = OnError;
     s_Ws.onmessage = OnMessage;
+
+    s_TickTimer = setInterval(Tick, 0);
 }
 
 /**
@@ -125,6 +151,8 @@ export function Close() {
     s_Connected = false;
     s_ConnectionId = -1;
     Clear();
+
+    clearInterval(s_TickTimer);
 }
 
 /**
@@ -222,7 +250,7 @@ export function CancelRequest(eventType, message = null) {
 
     let request = s_Requests.get(eventType);
     CleanRequest(eventType);
-    Reject(request, new Error(!!message ? message : `Request ${eventType} canceled`));
+    Reject(request, new OperationCanceledException(!!message ? message : `Request ${eventType} canceled`));
     return true;
 }
 
@@ -353,7 +381,7 @@ function NotifyLocalListeners(eventType, data, notifyWildcard) {
             }
         }
         catch (ex) {
-            console.exception(ex);
+            console.error(ex);
         }
     }
 
@@ -372,7 +400,6 @@ function HandleIncomingEvent(event) {
                 let response = CreateRequest(kRequestAcknowledge, msg.eventType, msg.senderId, msg.requestId, null, null);
                 SendRequest(response);
             }
-            console.log("kRequest");
             break;
         case kRequestAcknowledge: // Request emitter
             let pendingRequest = GetPendingRequest(msg.eventType, msg.requestId);
@@ -386,7 +413,6 @@ function HandleIncomingEvent(event) {
                 SendRequest(message);
             }
             // else Request might potentially have timed out.
-            console.log("kRequestAcknowledge");
             break;
         case kRequestExecute: // Request receiver
             {
@@ -394,7 +420,6 @@ function HandleIncomingEvent(event) {
                 let results = NotifyLocalListeners(msg.eventType, msg.data, false);
                 let response = CreateRequest(kRequestResult, msg.eventType, msg.senderId, msg.requestId, results, msg.eventDataSerialization);
                 SendRequest(response);
-                console.log("kRequestExecute");
                 break;
             }
         case kRequestResult: // Request emitter
@@ -405,7 +430,6 @@ function HandleIncomingEvent(event) {
                 Resolve(pendingRequestAwaitingResult, msg.data);
                 CleanRequest(msg.eventType);
             }
-            console.log("kRequestResult");
             break;
         case kEvent:
             {
@@ -472,7 +496,7 @@ function Resolve(offer, results) {
             offer.promises[i](null, results);
         }
         catch (e) {
-            console.exception(e);
+            console.error(e);
         }
     }
 }
@@ -483,7 +507,7 @@ function Reject(offer, err) {
             offer.promises[i](err, null);
         }
         catch (e) {
-            console.exception(e);
+            console.error(e);
         }
     }
 }
@@ -508,4 +532,26 @@ function GetPendingRequest(eventType, requestId) {
         pendingRequest = null;
     }
     return pendingRequest != null && pendingRequest.id == requestId ? pendingRequest : null;
+}
+
+function Tick()
+{
+    if (!IsConnected())
+        return;
+
+    if (s_Requests.size > 0)
+    {
+        let now = Date.now();
+        for (let request of s_Requests.values())
+        {
+            let elapsedTime = now - request.offerStartTime;
+            if (request.isAcknowledged)
+                continue;
+            if (elapsedTime > request.timeoutInMs)
+            {
+                CleanRequest(request.eventType);
+                Reject(request, new TimeoutException(`Request timeout for ${request.eventType} (${elapsedTime} > ${request.timeoutInMs})`));
+            }
+        }
+    }
 }
