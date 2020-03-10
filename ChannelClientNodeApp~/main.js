@@ -11,7 +11,7 @@ document.getElementById("request1").addEventListener("click", OnRequest1);
 document.getElementById("log1").addEventListener("click", OnLog1);
 
 // Setup EventService
-eventService.Start();
+eventService.Start(54209);
 let unityEmit1OffHandler = eventService.On(kUnityEmit1, (eventType, data) => {
     console.log(`On ${kUnityEmit1}: [${eventType}] ${data.join(",")}`)
     unityEmit1OffHandler();

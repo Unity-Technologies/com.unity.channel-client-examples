@@ -1,3 +1,7 @@
+/**
+ * EventService module
+ * @module event-service
+ */
 
 const kRequest = "request";
 const kRequestAcknowledge = "requestAck";
@@ -9,63 +13,133 @@ const kLog = "log";
 const kRequestDefaultTimeout = 700;
 
 const kAddress = "127.0.0.1";
-const kPort = 61149;
 
+/**
+ * Callback used to handle an Emit or Request.
+ *
+ * @callback onHandler
+ * @param {string} eventType The type of the event. Corresponds to the eventType used in Emit and Request.
+ * @param {object[]} data The data sent by Emit or Request.
+ * @returns {*} Nothing in the case of a Emit handler, otherwise anything.
+ */
+
+/**
+ * Callback used to handle the result of a Request.
+ *
+ * @callback promiseHandler
+ * @param {Error} err The error, if there was an error or the request has been cancelled. Null otherwise.
+ * @param {object[]} data The result of all request handlers.
+ */
+
+/**
+ * Callback used to unregister an event handler registered with the function On.
+ *
+ * @callback offHandler
+ */
+
+/**
+ * Map of event handlers.
+ * @type {Map<string, onHandler>}
+ */
 let s_Events = new Map();
+
+/**
+ * Map of requests.
+ * @type {Map<string, RequestData>}
+ */
 let s_Requests = new Map();
 
-let ws = null;
-let connected = false;
-let connectionId = -1;
+let s_Ws = null;
+let s_Connected = false;
+let s_ConnectionId = -1;
 
-let requestId = -1;
+let s_RequestId = 0;
+
+/**
+ * Enum for event data serialization.
+ * @readonly
+ * @enum {number}
+ */
+const EventDataSerialization = {
+    /** @type {number} */
+    StandardJson: 0,
+    /** @type {number} */
+    JsonUtility: 1
+}
 
 class RequestData {
+    /** @type {string} */
     eventType;
+    /** @type {number} */
     id;
+    /** @type {promiseHandler[]} */
     promises;
+    /** @type {number} */
     offerStartTime;
+    /** @type {boolean} */
     isAcknowledged;
+    /** @type {object} */
     data;
+    /** @type {number} */
     timeoutInMs;
+    /** @type {object} */
     dataInfos;
 }
 
 class RequestMessage {
+    /** @type {string} */
     reqType;
+    /** @type {string} */
     eventType;
+    /** @type {number} */
     senderId;
+    /** @type {number} */
     requestId;
+    /** @type {object} */
     data;
+    /** @type {object} */
     dataInfos;
+    /** @type {EventDataSerialization} */
     eventDataSerialization;
 }
 
-const EventDataSerialization = {
-    StandardJson: 0,
-    JsonUtility: 1
-}
-
 // API functions
-export function Start() {
-    const connectTo = `ws://${kAddress}:${kPort}/event`;
-    ws = new WebSocket(connectTo);
-    ws.onopen = OnOpen;
-    ws.onclose = OnClose;
-    ws.onerror = OnError;
-    ws.onmessage = OnMessage;
+
+/**
+ * Start the EventService.
+ * @param {number} port Port on which to connect to.
+ */
+export function Start(port) {
+    const connectTo = `ws://${kAddress}:${port}/event`;
+    s_Ws = new WebSocket(connectTo);
+    s_Ws.onopen = OnOpen;
+    s_Ws.onclose = OnClose;
+    s_Ws.onerror = OnError;
+    s_Ws.onmessage = OnMessage;
 }
 
+/**
+ * Close the EventService. This function is called automatically when the websocket is closed or there is an error.
+ */
 export function Close() {
-    connected = false;
-    connectionId = -1;
+    s_Connected = false;
+    s_ConnectionId = -1;
     Clear();
 }
 
+/**
+ * Clears all pending requests.
+ */
 export function Clear() {
     s_Requests.clear();
 }
 
+/**
+ * Register an event handler for a specific event raised by Emit or Request.
+ * @param {string} eventType The type of event to handle.
+ * @param {onHandler} onHandler Callback that handles the event.
+ * @returns {offHandler} Callback that you can call to unregister the handler.
+ */
 export function On(eventType, onHandler) {
     let handlers = null;
     if (!s_Events.has(eventType)) {
@@ -83,6 +157,11 @@ export function On(eventType, onHandler) {
     }
 }
 
+/**
+ * Unregister an event handler.
+ * @param {string} eventType The type of event to handle.
+ * @param {onHandler} onHandler The handler to unregister.
+ */
 export function Off(eventType, onHandler) {
     if (s_Events.has(eventType)) {
         let handlers = s_Events.get(eventType);
@@ -95,10 +174,20 @@ export function Off(eventType, onHandler) {
     }
 }
 
+/**
+ * Check if the EventService is connected to the server.
+ * @return {boolean} True if the EventService is connected.
+ */
 export function IsConnected() {
-    return connected;
+    return s_Connected;
 }
 
+/**
+ * Emit an event with some values.
+ * @param {string} eventType The type of event to emit.
+ * @param {object|object[]} args Values to send. Can be null.
+ * @param {number} [targetId=-1] Target client Id. -1 for any client.
+ */
 export function Emit(eventType, args, targetId = -1) {
     if (!Array.isArray(args) && !!args) {
         args = [args];
@@ -112,10 +201,21 @@ export function Emit(eventType, args, targetId = -1) {
     SendRequest(req);
 }
 
+/**
+ * Check if there is any request pending for a specific event.
+ * @param {string} eventType Type of event.
+ * @returns {boolean} True if there is any request pending.
+ */
 export function IsRequestPending(eventType) {
     return s_Requests.has(eventType);
 }
 
+/**
+ * Cancel any pending requests for a specific event.
+ * @param {string} eventType Type of event.
+ * @param {string} [message=null] Message to send to the request handler.
+ * @returns {boolean} True if the request was canceled.
+ */
 export function CancelRequest(eventType, message = null) {
     if (!s_Requests.has(eventType))
         return false;
@@ -126,6 +226,13 @@ export function CancelRequest(eventType, message = null) {
     return true;
 }
 
+/**
+ * Send a request to anyone who is connected to the EventService.
+ * @param {string} eventType Type of event to request.
+ * @param {promiseHandler} promiseHandler Callback that handles the result of the request.
+ * @param {object|object[]} args Values to send with the request. Can be null.
+ * @param {number} [timeoutInMs=] Number of milliseconds to wait before cancelling the request automatically.
+ */
 export function Request(eventType, promiseHandler, args, timeoutInMs = kRequestDefaultTimeout) {
     if (!Array.isArray(args) && !!args) {
         args = [args];
@@ -167,6 +274,10 @@ export function Request(eventType, promiseHandler, args, timeoutInMs = kRequestD
     }
 }
 
+/**
+ * Send a message to the server to be printed in the console.
+ * @param {string} msg Message to log.
+ */
 export function Log(msg)
 {
     var req = CreateRequest(kLog, null, -1, -1, msg, null);
@@ -183,6 +294,7 @@ function OnClose(ev) {
 
 function OnError(ev) {
     Close();
+    console.error(ev);
 }
 
 function OnMessage(ev) {
@@ -191,8 +303,8 @@ function OnMessage(ev) {
     } else {
         // The server sends us our connectionId in plain text
         let data = ev["data"];
-        connectionId = parseInt(data);
-        connected = true;
+        s_ConnectionId = parseInt(data);
+        s_Connected = true;
     }
 }
 
@@ -204,7 +316,7 @@ function CreateRequest(msgType, eventType, targetId, requestId, args, dataInfos)
     }
     if (!!eventType)
         req["type"] = eventType;
-    req["senderId"] = connectionId;
+    req["senderId"] = s_ConnectionId;
     if (requestId)
         req["requestId"] = requestId;
     req["data"] = args;
@@ -215,7 +327,7 @@ function CreateRequest(msgType, eventType, targetId, requestId, args, dataInfos)
 }
 
 function SendRequest(request) {
-    ws.send(JSON.stringify(request));
+    s_Ws.send(JSON.stringify(request));
 }
 
 function NotifyLocalListeners(eventType, data, notifyWildcard) {
@@ -260,6 +372,7 @@ function HandleIncomingEvent(event) {
                 let response = CreateRequest(kRequestAcknowledge, msg.eventType, msg.senderId, msg.requestId, null, null);
                 SendRequest(response);
             }
+            console.log("kRequest");
             break;
         case kRequestAcknowledge: // Request emitter
             let pendingRequest = GetPendingRequest(msg.eventType, msg.requestId);
@@ -273,6 +386,7 @@ function HandleIncomingEvent(event) {
                 SendRequest(message);
             }
             // else Request might potentially have timed out.
+            console.log("kRequestAcknowledge");
             break;
         case kRequestExecute: // Request receiver
             {
@@ -280,6 +394,7 @@ function HandleIncomingEvent(event) {
                 let results = NotifyLocalListeners(msg.eventType, msg.data, false);
                 let response = CreateRequest(kRequestResult, msg.eventType, msg.senderId, msg.requestId, results, msg.eventDataSerialization);
                 SendRequest(response);
+                console.log("kRequestExecute");
                 break;
             }
         case kRequestResult: // Request emitter
@@ -290,6 +405,7 @@ function HandleIncomingEvent(event) {
                 Resolve(pendingRequestAwaitingResult, msg.data);
                 CleanRequest(msg.eventType);
             }
+            console.log("kRequestResult");
             break;
         case kEvent:
             {
@@ -323,7 +439,7 @@ function DeserializeEvent(event) {
     }
 
     // If we are receiving our own messages, bail out.
-    if (msg.senderId === connectionId) {
+    if (msg.senderId === s_ConnectionId) {
         return null;
     }
 
@@ -377,7 +493,7 @@ function HasHandlers(eventType) {
 }
 
 function GetNewRequestId() {
-    return ++requestId;
+    return ++s_RequestId;
 }
 
 function GetPendingRequest(eventType, requestId) {
@@ -386,6 +502,7 @@ function GetPendingRequest(eventType, requestId) {
     }
     let pendingRequest = s_Requests.get(eventType);
     if (pendingRequest != null && pendingRequest.id != requestId) {
+        console.log(`Request Id mismatch: (Pending)${pendingRequest.id} vs (request)${requestId}`);
         // Mismatch request: clean it.
         CleanRequest(eventType);
         pendingRequest = null;
