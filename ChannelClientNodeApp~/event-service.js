@@ -306,9 +306,8 @@ export function Request(eventType, promiseHandler, args, timeoutInMs = kRequestD
  * Send a message to the server to be printed in the console.
  * @param {string} msg Message to log.
  */
-export function Log(msg)
-{
-    var req = CreateRequest(kLog, null, -1, -1, msg, null);
+export function Log(msg) {
+    let req = CreateRequest(kLog, null, -1, -1, msg, null);
     SendRequest(req);
 }
 
@@ -408,7 +407,6 @@ function HandleIncomingEvent(event) {
                 pendingRequest.isAcknowledged = true;
                 pendingRequest.offerStartTime = Date.now();
 
-                // var message = CreateRequestMsgWithDataString(kRequestExecute, msg.eventType, msg.senderId, msg.requestId, pendingRequest.data, pendingRequest.dataInfos);
                 let message = CreateRequest(kRequestExecute, msg.eventType, msg.senderId, msg.requestId, pendingRequest.data, pendingRequest.dataInfos);
                 SendRequest(message);
             }
@@ -534,21 +532,17 @@ function GetPendingRequest(eventType, requestId) {
     return pendingRequest != null && pendingRequest.id == requestId ? pendingRequest : null;
 }
 
-function Tick()
-{
+function Tick() {
     if (!IsConnected())
         return;
 
-    if (s_Requests.size > 0)
-    {
+    if (s_Requests.size > 0) {
         let now = Date.now();
-        for (let request of s_Requests.values())
-        {
+        for (let request of s_Requests.values()) {
             let elapsedTime = now - request.offerStartTime;
             if (request.isAcknowledged)
                 continue;
-            if (elapsedTime > request.timeoutInMs)
-            {
+            if (elapsedTime > request.timeoutInMs) {
                 CleanRequest(request.eventType);
                 Reject(request, new TimeoutException(`Request timeout for ${request.eventType} (${elapsedTime} > ${request.timeoutInMs})`));
             }
