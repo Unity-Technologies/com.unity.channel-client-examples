@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Text;
 using Unity.MPE;
 using UnityEditor;
@@ -134,7 +132,8 @@ public static class ChannelCommunicationDocExample
 }
 
 /*
-This will print in the console:
+If you execute the 6 menu item one after the other, this will print the following 
+in the console:
 
 [Step1] ChannelService Running: 127.0.0.1:64647
 
