@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class EventServiceExample : EditorWindow
+public class EventServiceExampleWindow : EditorWindow
 {
     const string k_WebEmit1 = "webEmit1";
     const string k_WebRequest1 = "webRequest1";
@@ -17,7 +17,7 @@ public class EventServiceExample : EditorWindow
     [MenuItem("Tools/Open EventServiceExample Window")]
     static void Init()
     {
-        GetWindow<EventServiceExample>();
+        GetWindow<EventServiceExampleWindow>();
     }
 
     void OnEnable()

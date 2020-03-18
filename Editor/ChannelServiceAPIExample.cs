@@ -1,3 +1,4 @@
+// #define REGISTER_CHANNEL_ON_STARTUP
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,13 +16,19 @@ static class ChannelAPIExample
     static Action s_DisconnectBinaryChannel;
     static Action s_DisconnectStringChannel;
 
+    #if REGISTER_CHANNEL_ON_STARTUP
     // This function is called each domain reload (i.e each time a script recompiles).
     [InitializeOnLoadMethod]
+    static void RegisterChannelOnLoad()
+    {
+        RegisterChannelService();
+    }
+    #endif
+
     static void RegisterChannelService()
     {
         if (!ChannelServiceAPI.IsRunning())
             ChannelServiceAPI.StartChannelService();
-
 
         Debug.Log($"ChannelService Running: {ChannelServiceAPI.GetAddress()}:{ChannelServiceAPI.GetPort()}");
 
@@ -40,7 +47,7 @@ static class ChannelAPIExample
         }
     }
 
-    [MenuItem("Tools/Register new channels")]
+    [MenuItem("ChannelServiceAPI/Register new channels")]
     static void RegisterMenu()
     {
         RegisterChannelService();
@@ -66,7 +73,5 @@ static class ChannelAPIExample
 
         // Let's pong it back:
         ChannelServiceAPI.Send(connectionId, msgStr);
-
-        
     }
 }
