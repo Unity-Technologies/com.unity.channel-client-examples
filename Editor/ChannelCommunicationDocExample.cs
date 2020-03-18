@@ -1,4 +1,6 @@
-﻿using System;
+﻿// #define COMMUNICATION_PUBLIC_API
+#if COMMUNICATION_PUBLIC_API
+using System;
 using System.Text;
 using Unity.MPE;
 using UnityEditor;
@@ -160,3 +162,4 @@ Receiving pong data: Hello world! for clientId: -930064725 with channelName: cus
 [Step 6]: Closing clients
 
 */
+#endif

@@ -1,4 +1,6 @@
-﻿using UnityEditor;
+﻿// #define COMMUNICATION_PUBLIC_API
+#if COMMUNICATION_PUBLIC_API
+using UnityEditor;
 using UnityEngine;
 using Unity.MPE;
 using System;
@@ -82,3 +84,4 @@ Request fulfilled: pong!
 [Step 4] Closing all Event handlers
 
 */
+#endif
