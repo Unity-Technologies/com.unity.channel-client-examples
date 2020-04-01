@@ -1,4 +1,6 @@
-﻿using System;
+﻿// #define COMMUNICATION_PUBLIC_API
+#if COMMUNICATION_PUBLIC_API
+using System;
 using Unity.MPE;
 using UnityEditor;
 using UnityEngine;
@@ -22,12 +24,12 @@ public class EventServiceExampleWindow : EditorWindow
 
     void OnEnable()
     {
-        m_WebEmit1Off = EventService.On(k_WebEmit1, (type, data) =>
+        m_WebEmit1Off = EventService.RegisterEventHandler(k_WebEmit1, (type, data) =>
         {
             Debug.Log($"On {k_WebEmit1}: [{type}] {string.Join(",", data)}");
         });
 
-        m_WebRequest1Off = EventService.On(k_WebRequest1, (type, data) =>
+        m_WebRequest1Off = EventService.RegisterEventHandler(k_WebRequest1, (type, data) =>
         {
             Debug.Log($"On {k_WebRequest1}: [{type}] {string.Join(",", data)}");
             return new object[] { "test", 42, 123.4f };
@@ -66,3 +68,4 @@ public class EventServiceExampleWindow : EditorWindow
         }, new object[] { "test", 42 });
     }
 }
+#endif

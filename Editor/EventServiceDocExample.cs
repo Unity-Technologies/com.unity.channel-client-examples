@@ -24,11 +24,11 @@ public static class EventServiceDocExample
     static void SetupEventServiceHandlers()
     {
         Debug.Log("[Step 1] Setup handlers");
-        s_CustomLogEventDisconnect = EventService.On("custom_log", (eventType, args) => {
+        s_CustomLogEventDisconnect = EventService.RegisterEventHandler("custom_log", (eventType, args) => {
             Debug.Log($"Log a {eventType} {args[0]}");
         });
 
-        s_PingPongEventDisconnect = EventService.On("pingpong", (eventType, args) =>
+        s_PingPongEventDisconnect = EventService.RegisterEventHandler("pingpong", (eventType, args) =>
         {
             Debug.Log($"Receive a {eventType} {args[0]}");
             return "pong!";

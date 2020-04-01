@@ -16,9 +16,6 @@ public static class ChannelServiceAPI
     static Type s_ChannelServiceType;
     static Type s_ChannelInfoType;
     static Type s_ChannelHandlerType;
-
-    public delegate void ChannelHandler(int clientId, byte[] binaryData);
-
     static ChannelServiceAPI()
     {
         var assembly = typeof(EventService).Assembly;
@@ -94,12 +91,11 @@ public static class ChannelServiceAPI
         return (int)getPortFunction.Invoke(null, new object[0]);
     }
 
-    internal static Action GetOrCreateChannel(string channelName, ChannelHandler handler)
+    internal static Action GetOrCreateChannel(string channelName, Action<int,byte[]> handler)
     {
         Debug.Log($"Channel {channelName} ready");
         var getOrCreateChannelFunction = s_ChannelServiceType.GetMethod("GetOrCreateChannel", BindingFlags.Public | BindingFlags.Static);
-        var properTypeHandler = ConvertDelegate(handler, s_ChannelHandlerType);
-        return getOrCreateChannelFunction.Invoke(null, new object[] { channelName, properTypeHandler }) as Action;
+        return getOrCreateChannelFunction.Invoke(null, new object[] { channelName, handler }) as Action;
     }
 
     // Broadcast to all connections on the same channel

@@ -79,7 +79,7 @@ public static class ChannelCommunicationDocExample
         {
             s_BinaryClient = ChannelClient.GetOrCreateClient("custom_binary_ping_pong");
             s_BinaryClient.Start(autoTick);
-            s_DisconnectBinaryClient = s_BinaryClient.On(HandleClientBinaryMessage);
+            s_DisconnectBinaryClient = s_BinaryClient.RegisterMessageHandler(HandleClientBinaryMessage);
         }
         Debug.Log($"[Step3] Setup client for channel custom_binary_ping_pong. ClientId: {s_BinaryClient.clientId}");
 
@@ -87,7 +87,7 @@ public static class ChannelCommunicationDocExample
         {
             s_StringClient = ChannelClient.GetOrCreateClient("custom_ascii_ping_pong");
             s_StringClient.Start(autoTick);
-            s_DisconnectStringClient = s_StringClient.On(HandleClientStringMessage);
+            s_DisconnectStringClient = s_StringClient.RegisterMessageHandler(HandleClientStringMessage);
         }
         Debug.Log($"[Step3] Setup client for channel custom_ascii_ping_pong. ClientId: {s_StringClient.clientId}");
     }
