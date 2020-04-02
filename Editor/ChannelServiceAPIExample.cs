@@ -1,11 +1,11 @@
 // #define REGISTER_CHANNEL_ON_STARTUP
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Text;
+#if COMMUNICATION_PUBLIC_API
 using UnityEditor.MPE;
+#else 
+using Unity.MPE;
+#endif
 using UnityEditor;
 using UnityEngine;
 
