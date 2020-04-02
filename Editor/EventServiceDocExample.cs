@@ -1,8 +1,8 @@
-﻿// #define COMMUNICATION_PUBLIC_API
+﻿#define COMMUNICATION_PUBLIC_API
 #if COMMUNICATION_PUBLIC_API
 using UnityEditor;
 using UnityEngine;
-using Unity.MPE;
+using UnityEditor.MPE;
 using System;
 
 public static class EventServiceDocExample

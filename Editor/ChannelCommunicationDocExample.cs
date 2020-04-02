@@ -1,8 +1,8 @@
-﻿// #define COMMUNICATION_PUBLIC_API
+﻿#define COMMUNICATION_PUBLIC_API
 #if COMMUNICATION_PUBLIC_API
 using System;
 using System.Text;
-using Unity.MPE;
+using UnityEditor.MPE;
 using UnityEditor;
 using UnityEngine;
 
@@ -81,7 +81,7 @@ public static class ChannelCommunicationDocExample
             s_BinaryClient.Start(autoTick);
             s_DisconnectBinaryClient = s_BinaryClient.RegisterMessageHandler(HandleClientBinaryMessage);
         }
-        Debug.Log($"[Step3] Setup client for channel custom_binary_ping_pong. ClientId: {s_BinaryClient.ClientId}");
+        Debug.Log($"[Step3] Setup client for channel custom_binary_ping_pong. ClientId: {s_BinaryClient.clientId}");
 
         if (s_StringClient == null)
         {
@@ -89,17 +89,17 @@ public static class ChannelCommunicationDocExample
             s_StringClient.Start(autoTick);
             s_DisconnectStringClient = s_StringClient.RegisterMessageHandler(HandleClientStringMessage);
         }
-        Debug.Log($"[Step3] Setup client for channel custom_ascii_ping_pong. ClientId: {s_StringClient.ClientId}");
+        Debug.Log($"[Step3] Setup client for channel custom_ascii_ping_pong. ClientId: {s_StringClient.clientId}");
     }
 
     static void HandleClientBinaryMessage(byte[] data)
     {
-        Debug.Log($"Receiving pong binary data: {data} for clientId: {s_BinaryClient.ClientId} with channelName: {s_BinaryClient.ChannelName}");
+        Debug.Log($"Receiving pong binary data: {data} for clientId: {s_BinaryClient.clientId} with channelName: {s_BinaryClient.channelName}");
     }
 
     static void HandleClientStringMessage(string data)
     {
-        Debug.Log($"Receiving pong data: {data} for clientId: {s_StringClient.ClientId} with channelName: {s_StringClient.ChannelName}");
+        Debug.Log($"Receiving pong data: {data} for clientId: {s_StringClient.clientId} with channelName: {s_StringClient.channelName}");
     }
 
     [MenuItem("ChannelDoc/Step 4")]

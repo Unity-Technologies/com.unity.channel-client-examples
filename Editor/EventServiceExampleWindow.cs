@@ -1,7 +1,7 @@
-﻿// #define COMMUNICATION_PUBLIC_API
+﻿#define COMMUNICATION_PUBLIC_API
 #if COMMUNICATION_PUBLIC_API
 using System;
-using Unity.MPE;
+using UnityEditor.MPE;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
