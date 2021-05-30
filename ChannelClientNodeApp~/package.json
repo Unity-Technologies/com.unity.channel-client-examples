@@ -4,6 +4,6 @@
     "description": "An example of connecting to the ",
     "main": "index.js",
     "dependencies": {
-        "ws": "^5.2.0"
+        "ws": "^7.4.6"
     }
 }
